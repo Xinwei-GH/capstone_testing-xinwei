@@ -1,7 +1,7 @@
 locals {
     env           = "prod"                                      # Need to update prod or non-prod
     name_prefix   = "xinwei" # your base name prefix
-    env_suffix    = local.env == "prod" ? "" : "-${local.env}"  # Need to update prod or non-prod 
+    env_suffix    = "-${local.env}" # always suffix the env
   }
 
 ## IoT Core & Policy ##
@@ -11,7 +11,7 @@ resource "aws_iot_thing" "shop_floor_simulator" {
 }
 
 resource "aws_iot_policy" "pubsub" {
-  name = "PubSubToAnyTopic"
+  name = "PubSubToAnyTopic${local.env_suffix}"       #local.env_suffix added
 
   # Terraform's "jsonencode" function converts a
   # Terraform expression result to valid JSON syntax.
@@ -83,7 +83,8 @@ resource "aws_sqs_queue" "shop_floor_data_queue" {
 }
 
 resource "aws_iot_topic_rule" "push_to_sqs" {
-  name = "push_to_sqs${local.env_suffix}"           #local.env_suffix added
+  name = "push_to_sqs${replace(local.env_suffix, "-", "_")}"
+           #local.env_suffix added
   enabled     = true
   sql         = "SELECT * from '1001/+/ShopFloorData'"
   sql_version = "2016-03-23"

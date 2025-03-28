@@ -1,7 +1,7 @@
 locals {
     env           = "prod"                                      # Need to update prod or non-prod
     name_prefix   = "xinwei" # your base name prefix
-    env_suffix    = local.env == "prod" ? "" : "-${local.env}"  # Need to update prod or non-prod 
+    env_suffix    = "-${local.env}" # always suffix the env
   }
 
 ##SES##
@@ -95,7 +95,7 @@ resource "aws_lambda_function" "send_alert_email" {
 ##dynamodb##
 
 resource "aws_kms_key" "shop_floor_alerts_kms" { # tschui added to solve the severity issue detected by Snyk
-  description         = "KMS key for encrypting shop_floor_alerts DynamoDB table"
+  description         = "KMS key for ${local.env} shop_floor_alerts DynamoDB table"
   enable_key_rotation = true
 }
 
