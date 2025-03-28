@@ -1,7 +1,13 @@
+locals {
+    env           = "prod"                                      # Need to update prod or non-prod
+    name_prefix   = "xinwei" # your base name prefix
+    env_suffix    = local.env == "prod" ? "" : "-${local.env}"  # Need to update prod or non-prod 
+  }
+
 ## shopFloorData Lambda Execution Role ##
 
 resource "aws_iam_policy" "shopFloorData_lambda_policy_lab2" {
-  name        = "shopFloorData_lambda_policy_lab2"
+  name        = "shopFloorData_lambda_policy_lab2${local.env_suffix}"       #local.env_suffix added
   path        = "/"
   description = "Policy to be attached to ShopFloorData_TxnService lambda"
 
@@ -24,7 +30,7 @@ resource "aws_iam_policy" "shopFloorData_lambda_policy_lab2" {
 }
 
 resource "aws_iam_role" "shopFloorData_lambda_role_lab2" {
-  name = "shopFloorData_lambda_role_lab2"
+  name = "shopFloorData_lambda_role_lab2${local.env_suffix}"       #local.env_suffix added
 
   assume_role_policy = <<EOF
 {
@@ -48,7 +54,7 @@ resource "aws_iam_role_policy_attachment" "shopFloorData_lambda_role_attach" {
   policy_arn = aws_iam_policy.shopFloorData_lambda_policy_lab2.arn
 }
 
-## shopFloorData Lambda Fucntion ##
+## shopFloorData Lambda Function ##
 
 data "archive_file" "lambdadata" {
   type        = "zip"
@@ -57,7 +63,7 @@ data "archive_file" "lambdadata" {
 }
 
 resource "aws_lambda_function" "shopFloorData_txnService" {
-  function_name = "ShopFloorData_TxnService"
+  function_name = "ShopFloorData_TxnService${local.env_suffix}"       #local.env_suffix added
   role          = aws_iam_role.shopFloorData_lambda_role_lab2.arn
   runtime       = "nodejs16.x"
   filename      = "shopFloorData.zip"
@@ -75,7 +81,7 @@ resource "aws_lambda_function" "shopFloorData_txnService" {
 ## AWI API Gateway ##
 
 resource "aws_api_gateway_rest_api" "shopFloor_api_gw" {
-  name        = "shopFloor_api_gw"
+  name        = "shopFloor_api_gw${local.env_suffix}"       #local.env_suffix added
   description = "REST API to CRUD Shop Floor Data"
 }
 
@@ -247,14 +253,14 @@ resource "aws_api_gateway_deployment" "shopFloorData_api_deploy" {
 }
 
 resource "aws_cloudwatch_log_group" "api_gateway_logs" { // tschui added to solve the severity issue detected by Snyk
-  name              = "/aws/api/gateway/logs"
+  name              =  "/aws/api/gateway/logs${local.env_suffix}"          #local.env_suffix added
   retention_in_days = 30
 }
 
 resource "aws_api_gateway_stage" "stage-andon-api" {
   deployment_id = aws_api_gateway_deployment.shopFloorData_api_deploy.id
   rest_api_id   = aws_api_gateway_rest_api.shopFloor_api_gw.id
-  stage_name    = "dev"
+  stage_name = local.env                                                 #local.env_suffix added
 
    # Enabling X-Ray tracing
   xray_tracing_enabled = true # tschui added to solve the severity issue detected by Snyk
@@ -265,4 +271,3 @@ resource "aws_api_gateway_stage" "stage-andon-api" {
     format          = "$context.requestId - $context.identity.sourceIp - $context.identity.userAgent - $context.requestTime - $context.status"
   }
 }
-

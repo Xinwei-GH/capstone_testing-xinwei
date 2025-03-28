@@ -1,21 +1,23 @@
 locals {
-  name_prefix = "chek" # provide your name prefix
-}
+    env           = "prod"                                      # Need to update prod or non-prod
+    name_prefix   = "xinwei" # your base name prefix
+    env_suffix    = local.env == "prod" ? "" : "-${local.env}"  # Need to update prod or non-prod 
+  }
 
 ##SES##
 
 resource "aws_ses_email_identity" "source_alert_email" {
-  email = "chekyeaw@gmail.com"
+  email = "xinwei.cheng.88@gmail.com"
 }
 
 resource "aws_ses_email_identity" "delivery_alert_email" {
-  email = "chekyeaw+ce8@gmail.com"
+  email = "xinwei.cheng.88@gmail.com"
 }
 
 ## shopFloorAlert Lambda Execution Role ##
 
 resource "aws_iam_policy" "shopFloorAlert_lambda_policy_lab1" {
-  name        = "shopFloorAlert_lambda_policy_lab1"
+  name        = "shopFloorAlert_lambda_policy_lab1${local.env_suffix}"       #local.env_suffix added
   path        = "/"
   description = "Policy to be attached to lambda"
 
@@ -42,7 +44,7 @@ resource "aws_iam_policy" "shopFloorAlert_lambda_policy_lab1" {
 }
 
 resource "aws_iam_role" "shopFloorAlert_lambda_role_lab1" {
-  name = "shopFloorAlert_lambda_role_lab1"
+  name = "shopFloorAlert_lambda_role_lab1${local.env_suffix}"       #local.env_suffix added  
 
   assume_role_policy = <<EOF
 {
@@ -75,7 +77,7 @@ data "archive_file" "lambdaalert" {
 }
 
 resource "aws_lambda_function" "send_alert_email" {
-  function_name = "SendAlertEmail"
+  function_name = "SendAlertEmail${local.env_suffix}"               #local.env_suffix added
   role          = aws_iam_role.shopFloorAlert_lambda_role_lab1.arn
   runtime       = "nodejs16.x"
   filename      = "sendAlertEmail.zip"
@@ -98,7 +100,7 @@ resource "aws_kms_key" "shop_floor_alerts_kms" { # tschui added to solve the sev
 }
 
 resource "aws_dynamodb_table" "shop_floor_alerts" {
-  name             = "shop_floor_alerts"
+  name             = "shop_floor_alerts${local.env_suffix}"     #local.env_suffix added
   billing_mode     = "PROVISIONED"
   stream_enabled   = true
   stream_view_type = "NEW_IMAGE"
@@ -143,7 +145,3 @@ resource "aws_lambda_event_source_mapping" "trigger" {
  depends_on = [null_resource.delay]
  
 }
-
-
-
-

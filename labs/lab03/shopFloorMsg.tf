@@ -1,7 +1,13 @@
+locals {
+    env           = "prod"                                      # Need to update prod or non-prod
+    name_prefix   = "xinwei" # your base name prefix
+    env_suffix    = local.env == "prod" ? "" : "-${local.env}"  # Need to update prod or non-prod 
+  }
+
 ## IoT Core & Policy ##
 
 resource "aws_iot_thing" "shop_floor_simulator" {
-  name = "shop_floor_simulator"
+  name = "shop_floor_simulator${local.env_suffix}"       #local.env_suffix added
 }
 
 resource "aws_iot_policy" "pubsub" {
@@ -26,7 +32,7 @@ resource "aws_iot_policy" "pubsub" {
 ## IoT Core Rule & SQS Queue ##
 
 resource "aws_iam_policy" "iot_policy" {
-  name = "iot_policy"
+  name = "iot_policy${local.env_suffix}"       #local.env_suffix added
   path = "/"
 
   # Terraform's "jsonencode" function converts a
@@ -47,7 +53,7 @@ resource "aws_iam_policy" "iot_policy" {
 }
 
 resource "aws_iam_role" "iot_role" {
-  name = "iot_role"
+  name = "iot_role${local.env_suffix}"       #local.env_suffix added
 
   assume_role_policy = <<EOF
 {
@@ -72,12 +78,12 @@ resource "aws_iam_role_policy_attachment" "iot_role_attach" {
 }
 
 resource "aws_sqs_queue" "shop_floor_data_queue" {
-  name = "shop_floor_data_queue"
+  name = "shop_floor_data_queue${local.env_suffix}"       #local.env_suffix added
   receive_wait_time_seconds = 20
 }
 
 resource "aws_iot_topic_rule" "push_to_sqs" {
-  name        = "push_to_sqs"
+  name = "push_to_sqs${local.env_suffix}"           #local.env_suffix added
   enabled     = true
   sql         = "SELECT * from '1001/+/ShopFloorData'"
   sql_version = "2016-03-23"
@@ -92,7 +98,7 @@ resource "aws_iot_topic_rule" "push_to_sqs" {
 ## processShopFloorMsgs Lambda Execution Role ##
 
 resource "aws_iam_policy" "lambda_policy" {
-  name = "lambda_policy"
+  name = "lambda_policy${local.env_suffix}"         #local.env_suffix added
   path = "/"
 
   # Terraform's "jsonencode" function converts a
@@ -114,7 +120,7 @@ resource "aws_iam_policy" "lambda_policy" {
   })
 }
 resource "aws_iam_role" "lambda_role" {
-  name = "lambda_role"
+  name = "lambda_role${local.env_suffix}"                    #local.env_suffix added
 
   assume_role_policy = <<EOF
 {
@@ -147,7 +153,7 @@ data "archive_file" "lambda" {
 }
 
 resource "aws_lambda_function" "processShopFloorMsgs" {
-  function_name = "ProcessShopFloorMsgs"
+  function_name = "ProcessShopFloorMsgs${local.env_suffix}"                #local.env_suffix added
   role          = aws_iam_role.lambda_role.arn
   runtime       = "nodejs16.x"
   filename      = "processShopFloorMsgs.zip"
