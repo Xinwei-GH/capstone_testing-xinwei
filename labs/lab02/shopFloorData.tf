@@ -1,5 +1,5 @@
 locals {
-    env           = "prod"                                      # Need to update prod or non-prod
+    env           = "xwtest"                                      # Need to update prod or non-prod
     name_prefix   = "xinwei" # your base name prefix
     env_suffix    = "-${local.env}" # always suffix the env
   }
